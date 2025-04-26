@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# One Photo - Приложение для просмотра фотографий из OneDrive
 
-## Getting Started
+## Описание проекта
+Приложение на Next.js для просмотра последних 10 фотографий из хранилища OneDrive. После авторизации пользователь получает доступ к галерее своих фотографий.
 
-First, run the development server:
+## Технологии
+- Next.js (последняя версия)
+- Microsoft Graph API для работы с OneDrive
+- NextAuth.js для аутентификации
+- Material UI (MUI) для стилизации
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## План разработки
+
+### 1. Настройка проекта
+- [ ] Создание нового проекта Next.js
+- [ ] Установка необходимых зависимостей
+- [ ] Настройка конфигурации проекта
+
+### 2. Аутентификация
+- [ ] Настройка NextAuth.js
+- [ ] Интеграция с Microsoft Graph API
+- [ ] Создание страницы входа
+- [ ] Реализация защищенных маршрутов
+
+### 3. Работа с OneDrive
+- [ ] Настройка доступа к OneDrive через Microsoft Graph API
+- [ ] Реализация получения списка фотографий
+- [ ] Сортировка фотографий по дате
+- [ ] Ограничение вывода до 10 последних фото
+
+### 4. Интерфейс пользователя
+- [ ] Создание страницы галереи
+- [ ] Реализация отображения фотографий
+- [ ] Добавление загрузки и обработки ошибок
+- [ ] Адаптивный дизайн
+
+### 5. Тестирование и оптимизация
+- [ ] Тестирование функциональности
+- [ ] Оптимизация производительности
+- [ ] Исправление ошибок
+
+### 6. Развертывание
+- [ ] Подготовка к деплою
+- [ ] Настройка переменных окружения
+- [ ] Развертывание на выбранной платформе
+
+## Требования к окружению
+- Node.js (версия 18 или выше)
+- npm
+- Аккаунт Microsoft для разработки
+- Зарегистрированное приложение в Azure Portal
+
+## Установка и запуск
+1. Клонировать репозиторий
+2. Установить зависимости: `npm install`
+3. Создать файл `.env.local` с необходимыми переменными окружения
+4. Запустить проект: `npm run dev`
+
+## Переменные окружения
+```
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-secret-key
+MICROSOFT_CLIENT_ID=your-client-id
+MICROSOFT_CLIENT_SECRET=your-client-secret
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Лицензия
+MIT
