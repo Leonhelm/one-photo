@@ -1,0 +1,35 @@
+.authContainer {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.authContent {
+  text-align: center;
+}
+
+.authTitle {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.authError {
+  color: #dc2626;
+}
+
+.authButton {
+  margin-top: 1rem;
+  background-color: #3b82f6;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.authButton:hover {
+  background-color: #2563eb;
+} 

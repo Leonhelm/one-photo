@@ -12,19 +12,13 @@ const cca = new ConfidentialClientApplication({
 
 export async function POST() {
   try {
-    console.log('Starting authentication process...');
-    
-    // Создаем URL для авторизации
     const authUrl = await cca.getAuthCodeUrl({
       scopes: loginRequest.scopes,
       redirectUri: msalConfig.auth.redirectUri
     });
 
-    return NextResponse.json({ 
-      authUrl
-    });
+    return NextResponse.json({ authUrl });
   } catch (error) {
-    console.error('Auth error:', error);
     return NextResponse.json({ 
       error: 'Authentication failed',
       details: error instanceof Error ? error.message : 'Unknown error'
