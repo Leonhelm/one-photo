@@ -1,36 +1,68 @@
-```typescript
-const { PublicClientApplication } = require('@azure/msal-node');
-const { Client } = require('@microsoft/microsoft-graph-client');
-require('isomorphic-fetch');
+# One Photo - Приложение для просмотра фотографий из OneDrive
 
-const config = {
-  auth: {
-    clientId: 'ВАШ_CLIENT_ID',
-    authority: 'https://login.microsoftonline.com/consumers',
-  }
-};
+## Описание проекта
+Приложение на Next.js для просмотра последних 10 фотографий из хранилища OneDrive. После авторизации пользователь получает доступ к галерее своих фотографий.
 
-const pca = new PublicClientApplication(config);
+## Технологии
+- Next.js (последняя версия)
+- Microsoft Graph API для работы с OneDrive
+- NextAuth.js для аутентификации
+- Material UI (MUI) для стилизации, нельзя использовать Tailwind CSS
 
-async function main() {
-  const tokenResponse = await pca.acquireTokenByDeviceCode({
-    scopes: ['Files.Read', 'offline_access'],
-    deviceCodeCallback: (response) => {
-      console.log(response.message); // тут будет ссылка и код
-    }
-  });
+## План разработки
 
-  const client = Client.init({
-    authProvider: (done) => done(null, tokenResponse.accessToken)
-  });
+### 1. Настройка проекта
+- [x] Создание нового проекта Next.js
+- [x] Установка необходимых зависимостей
+- [x] Настройка конфигурации проекта
 
-  const res = await client.api('/me/drive/root/children').top(10).get();
-  console.log(res.value);
-}
+### 2. Аутентификация
+- [ ] Настройка NextAuth.js
+- [ ] Интеграция с Microsoft Graph API
+- [ ] Создание страницы входа
+- [ ] Реализация защищенных маршрутов
 
-main().catch(console.error);
+### 3. Работа с OneDrive
+- [ ] Настройка доступа к OneDrive через Microsoft Graph API
+- [ ] Реализация получения списка фотографий
+- [ ] Сортировка фотографий по дате
+- [ ] Ограничение вывода до 10 последних фото
+
+### 4. Интерфейс пользователя
+- [ ] Создание страницы галереи
+- [ ] Реализация отображения фотографий
+- [ ] Добавление загрузки и обработки ошибок
+- [ ] Адаптивный дизайн
+
+### 5. Тестирование и оптимизация
+- [ ] Тестирование функциональности
+- [ ] Оптимизация производительности
+- [ ] Исправление ошибок
+
+### 6. Развертывание
+- [ ] Подготовка к деплою
+- [ ] Настройка переменных окружения
+- [ ] Развертывание на выбранной платформе
+
+## Требования к окружению
+- Node.js (версия 18 или выше)
+- npm
+- Аккаунт Microsoft для разработки
+- Зарегистрированное приложение в Azure Portal
+
+## Установка и запуск
+1. Клонировать репозиторий
+2. Установить зависимости: `npm install`
+3. Создать файл `.env.local` с необходимыми переменными окружения
+4. Запустить проект: `npm run dev`
+
+## Переменные окружения
+```
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-secret-key
+MICROSOFT_CLIENT_ID=your-client-id
+MICROSOFT_CLIENT_SECRET=your-client-secret
 ```
 
-Выше базовый скрипт по авторизации и получении 10 фотографий из one drive.
-
-Твоя задача: адаптировать скрипт и написать вокруг этой логики приложение на последней версии next.js
+## Лицензия
+MIT
