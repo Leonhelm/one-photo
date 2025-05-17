@@ -8,8 +8,6 @@ interface FilterParams {
 }
 
 async function getPhotosFromFolder(client: Client, folderId: string, filterDate?: Date): Promise<any[]> {
-    console.log('Получаем содержимое папки:', folderId);
-    
     try {
         const response = await client
             .api(`/me/drive/items/${folderId}/children`)
@@ -45,7 +43,6 @@ async function getPhotosFromFolder(client: Client, folderId: string, filterDate?
 
         // Рекурсивно обходим подпапки
         for (const folder of folders) {
-            console.log('Обходим подпапку:', folder.name);
             try {
                 const subPhotos = await getPhotosFromFolder(client, folder.id, filterDate);
                 photos.push(...subPhotos);
@@ -73,8 +70,6 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        console.log('Токен получен, инициализация Graph клиента...');
-
         const client = Client.init({
             authProvider: (done) => {
                 done(null, token);
@@ -82,7 +77,6 @@ export async function GET(request: NextRequest) {
         });
 
         // Получаем все файлы из корневой директории
-        console.log('Запрашиваем список файлов...');
         const rootResponse = await client
             .api('/me/drive/root')
             .select('id')
@@ -98,26 +92,12 @@ export async function GET(request: NextRequest) {
 
         // Рекурсивно получаем все файлы
         const allFiles = await getPhotosFromFolder(client, rootResponse.id);
-        console.log('Всего найдено файлов:', allFiles.length);
 
         // Фильтруем только изображения
         const photos = allFiles
             .filter((item: any) => {
                 const isImage = item.file.mimeType?.startsWith('image/');
-                if (!isImage) {
-                    console.log('Пропускаем не изображение:', {
-                        name: item.name,
-                        mimeType: item.file.mimeType
-                    });
-                    return false;
-                }
-
-                console.log('Найдено изображение:', {
-                    name: item.name,
-                    mimeType: item.file.mimeType
-                });
-
-                return true;
+                return isImage;
             })
             .map((item: any) => ({
                 id: item.id,
@@ -130,8 +110,6 @@ export async function GET(request: NextRequest) {
                 new Date(b.lastModifiedDateTime).getTime() - new Date(a.lastModifiedDateTime).getTime()
             )
             .slice(0, 10);
-
-        console.log('Отфильтрованные фотографии:', photos);
 
         return NextResponse.json(photos);
     } catch (error) {

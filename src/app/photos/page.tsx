@@ -106,7 +106,6 @@ export default function PhotosPage() {
 
                     const photosData = await photosResponse.json();
                     if (isMounted) {
-                        console.log('Полученные фотографии:', photosData);
                         setPhotos(photosData);
                     }
                 }
