@@ -14,8 +14,15 @@ import {
     ImageList,
     ImageListItem,
     ImageListItemBar,
+    TextField,
+    Grid,
 } from '@mui/material';
 import LogoutIcon from '@mui/icons-material/Logout';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { ru } from 'date-fns/locale';
+import type { GridProps } from '@mui/material/Grid';
 
 interface UserData {
     displayName: string;
@@ -30,6 +37,11 @@ interface Photo {
     lastModifiedDateTime: string;
 }
 
+interface FilterState {
+    date: Date | null;
+    directoryPath: string;
+}
+
 export default function PhotosPage() {
     const { isAuthenticated, accessToken, logout } = useAuth();
     const router = useRouter();
@@ -37,6 +49,10 @@ export default function PhotosPage() {
     const [photos, setPhotos] = useState<Photo[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [filters, setFilters] = useState<FilterState>({
+        date: new Date(),
+        directoryPath: process.env.NEXT_PUBLIC_ONEDRIVE_PHOTOS_DIR || '',
+    });
 
     useEffect(() => {
         if (!isAuthenticated || !accessToken) {
@@ -95,6 +111,43 @@ export default function PhotosPage() {
 
         fetchData();
     }, [isAuthenticated, accessToken, router, logout]);
+
+    const handleFilterChange = (field: keyof FilterState, value: any) => {
+        setFilters(prev => ({
+            ...prev,
+            [field]: value
+        }));
+    };
+
+    const handleFilterSubmit = async () => {
+        setLoading(true);
+        try {
+            const photosResponse = await fetch('/api/photos', {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                method: 'POST',
+                body: JSON.stringify(filters)
+            });
+
+            if (!photosResponse.ok) {
+                if (photosResponse.status === 401) {
+                    logout();
+                    return;
+                }
+                throw new Error('Ошибка при загрузке фотографий');
+            }
+
+            const photosData = await photosResponse.json();
+            setPhotos(photosData);
+        } catch (error) {
+            console.error('Ошибка:', error);
+            setError(error instanceof Error ? error.message : 'Произошла ошибка');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     if (!isAuthenticated) {
         return null;
@@ -161,6 +214,48 @@ export default function PhotosPage() {
                         Не удалось загрузить данные пользователя
                     </Typography>
                 )}
+            </Paper>
+
+            <Paper sx={{ p: 3, mt: 3 }}>
+                <Typography variant="h6" sx={{ mb: 2 }}>
+                    Фильтры
+                </Typography>
+                <Grid container spacing={2} alignItems="center">
+                    <Grid item xs={12} md={4} component="div">
+                        <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ru}>
+                            <DatePicker
+                                label="Дата"
+                                value={filters.date}
+                                onChange={(newValue: Date | null) => handleFilterChange('date', newValue)}
+                                slotProps={{
+                                    textField: {
+                                        fullWidth: true,
+                                        variant: 'outlined'
+                                    }
+                                }}
+                            />
+                        </LocalizationProvider>
+                    </Grid>
+                    <Grid item xs={12} md={6} component="div">
+                        <TextField
+                            fullWidth
+                            label="Путь к директории"
+                            value={filters.directoryPath}
+                            onChange={(e) => handleFilterChange('directoryPath', e.target.value)}
+                            variant="outlined"
+                        />
+                    </Grid>
+                    <Grid item xs={12} md={2} component="div">
+                        <Button
+                            fullWidth
+                            variant="contained"
+                            onClick={handleFilterSubmit}
+                            disabled={loading}
+                        >
+                            Применить
+                        </Button>
+                    </Grid>
+                </Grid>
             </Paper>
 
             <Box sx={{ mt: 4 }}>
