@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/providers/AuthProvider';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
     Box,
     Button,
@@ -11,6 +11,7 @@ import {
     Typography,
     useTheme,
     alpha,
+    CircularProgress,
 } from '@mui/material';
 import ImageIcon from '@mui/icons-material/Image';
 
@@ -27,12 +28,37 @@ export default function LoginPage() {
     const { login, isAuthenticated } = useAuth();
     const router = useRouter();
     const theme = useTheme();
+    const [isLoading, setIsLoading] = useState(true);
+    const [isAuthorizing, setIsAuthorizing] = useState(false);
 
     useEffect(() => {
         if (isAuthenticated) {
             router.push('/photos');
+        } else {
+            setIsLoading(false);
         }
     }, [isAuthenticated, router]);
+
+    const handleLogin = () => {
+        setIsAuthorizing(true);
+        login();
+    };
+
+    if (isLoading) {
+        return (
+            <Box
+                sx={{
+                    minHeight: '100vh',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.secondary.main, 0.1)} 100%)`,
+                }}
+            >
+                <CircularProgress size={40} />
+            </Box>
+        );
+    }
 
     return (
         <Box
@@ -102,8 +128,9 @@ export default function LoginPage() {
                     <Button
                         variant="contained"
                         size="large"
-                        startIcon={<MicrosoftIcon />}
-                        onClick={login}
+                        startIcon={isAuthorizing ? <CircularProgress size={20} color="inherit" /> : <MicrosoftIcon />}
+                        onClick={handleLogin}
+                        disabled={isAuthorizing}
                         sx={{
                             py: 1.5,
                             px: 4,
@@ -116,9 +143,13 @@ export default function LoginPage() {
                             transition: 'all 0.2s ease-in-out',
                             borderRadius: 2,
                             minWidth: 280,
+                            '&.Mui-disabled': {
+                                backgroundColor: alpha('#2F2F2F', 0.7),
+                                color: 'white',
+                            },
                         }}
                     >
-                        Войти через Microsoft
+                        {isAuthorizing ? 'Авторизация...' : 'Войти через Microsoft'}
                     </Button>
 
                     <Typography
