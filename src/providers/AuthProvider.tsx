@@ -24,10 +24,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (token) {
             setAccessToken(token);
             setIsAuthenticated(true);
-            // Удаляем токен из URL
-            router.replace('/');
+            // Удаляем токен из URL без редиректа
+            const url = new URL(window.location.href);
+            url.searchParams.delete('token');
+            window.history.replaceState({}, '', url.toString());
         }
-    }, [searchParams, router]);
+    }, [searchParams]);
 
     const login = async () => {
         try {
