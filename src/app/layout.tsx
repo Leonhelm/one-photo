@@ -1,9 +1,10 @@
 import { Inter } from 'next/font/google';
-import { AuthProvider } from '@/lib/auth/AuthContext';
+import { AuthProvider } from '@/providers/AuthProvider';
+import type { Metadata } from 'next';
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'] });
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'onePhoto',
   description: 'Просмотр последних фотографий из OneDrive',
 };
@@ -16,7 +17,9 @@ export default function RootLayout({
   return (
     <html lang="ru">
       <body className={inter.className}>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

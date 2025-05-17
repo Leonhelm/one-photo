@@ -1,27 +1,60 @@
 import { ConfidentialClientApplication } from '@azure/msal-node';
-import { msalConfig, loginRequest } from '@/config/auth';
 import { NextResponse } from 'next/server';
 
-const cca = new ConfidentialClientApplication({
-  auth: {
-    clientId: msalConfig.auth.clientId,
-    clientSecret: msalConfig.auth.clientSecret,
-    authority: msalConfig.auth.authority
-  }
-});
+const msalConfig = {
+    auth: {
+        clientId: process.env.AZURE_CLIENT_ID || '',
+        clientSecret: process.env.AZURE_CLIENT_SECRET || '',
+        authority: 'https://login.microsoftonline.com/consumers',
+        redirectUri: process.env.REDIRECT_URI || 'http://localhost:3000/api/auth/callback'
+    }
+};
+
+const loginRequest = {
+    scopes: ['User.Read', 'Files.Read.All']
+};
 
 export async function POST() {
-  try {
-    const authUrl = await cca.getAuthCodeUrl({
-      scopes: loginRequest.scopes,
-      redirectUri: msalConfig.auth.redirectUri
-    });
+    try {
+        console.log('Начало процесса авторизации');
+        console.log('Конфигурация MSAL:', {
+            clientId: msalConfig.auth.clientId ? 'установлен' : 'отсутствует',
+            clientSecret: msalConfig.auth.clientSecret ? 'установлен' : 'отсутствует',
+            redirectUri: msalConfig.auth.redirectUri
+        });
 
-    return NextResponse.json({ authUrl });
-  } catch (error) {
-    return NextResponse.json({ 
-      error: 'Authentication failed',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 });
-  }
+        // Проверяем наличие необходимых переменных окружения
+        if (!process.env.AZURE_CLIENT_ID || !process.env.AZURE_CLIENT_SECRET) {
+            console.error('Отсутствуют переменные окружения:', {
+                hasClientId: !!process.env.AZURE_CLIENT_ID,
+                hasClientSecret: !!process.env.AZURE_CLIENT_SECRET
+            });
+            throw new Error('Отсутствуют необходимые переменные окружения для авторизации');
+        }
+
+        const msalInstance = new ConfidentialClientApplication(msalConfig);
+        console.log('MSAL instance создан, получение URL авторизации...');
+        
+        // Получаем URL для авторизации
+        const authUrl = await msalInstance.getAuthCodeUrl({
+            scopes: loginRequest.scopes,
+            redirectUri: msalConfig.auth.redirectUri
+        });
+
+        console.log('URL авторизации получен:', authUrl);
+        return NextResponse.json({ authUrl });
+    } catch (error) {
+        console.error('Детальная ошибка авторизации:', {
+            message: error instanceof Error ? error.message : 'Неизвестная ошибка',
+            stack: error instanceof Error ? error.stack : undefined,
+            error
+        });
+        return NextResponse.json(
+            { 
+                error: 'Ошибка авторизации',
+                details: error instanceof Error ? error.message : 'Неизвестная ошибка'
+            },
+            { status: 500 }
+        );
+    }
 } 
