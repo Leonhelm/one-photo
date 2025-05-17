@@ -108,8 +108,7 @@ export async function GET(request: NextRequest) {
             }))
             .sort((a: any, b: any) => 
                 new Date(b.lastModifiedDateTime).getTime() - new Date(a.lastModifiedDateTime).getTime()
-            )
-            .slice(0, 10);
+            );
 
         return NextResponse.json(photos);
     } catch (error) {
