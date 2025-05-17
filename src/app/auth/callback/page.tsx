@@ -3,11 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import styles from './styles.module.css';
+import { useAuth } from '@/providers/AuthProvider';
 
 export default function AuthCallback() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
+  const { setAccessToken } = useAuth();
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -29,8 +31,8 @@ export default function AuthCallback() {
             throw new Error(tokenData.details || 'Failed to get token');
           }
 
-          localStorage.setItem('access_token', tokenData.accessToken);
-          router.push('/');
+          setAccessToken(tokenData.accessToken);
+          router.push('/photos');
         } catch (err) {
           setError(err instanceof Error ? err.message : 'Failed to exchange code for token');
         }
@@ -40,7 +42,7 @@ export default function AuthCallback() {
     };
 
     handleCallback();
-  }, [searchParams, router]);
+  }, [searchParams, router, setAccessToken]);
 
   if (error) {
     return (

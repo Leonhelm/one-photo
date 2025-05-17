@@ -14,17 +14,15 @@ export default function PhotosPage() {
     const router = useRouter();
     const [userData, setUserData] = useState<UserData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!isAuthenticated) {
+        if (!isAuthenticated || !accessToken) {
             router.push('/login');
+            return;
         }
-    }, [isAuthenticated, router]);
 
-    useEffect(() => {
         async function fetchUserData() {
-            if (!accessToken) return;
-
             try {
                 const response = await fetch('/api/user', {
                     headers: {
@@ -34,7 +32,6 @@ export default function PhotosPage() {
 
                 if (!response.ok) {
                     if (response.status === 401) {
-                        // Если токен истек или недействителен
                         logout();
                         return;
                     }
@@ -45,6 +42,7 @@ export default function PhotosPage() {
                 setUserData(data);
             } catch (error) {
                 console.error('Ошибка:', error);
+                setError(error instanceof Error ? error.message : 'Произошла ошибка');
                 if (error instanceof Error && error.message.includes('401')) {
                     logout();
                 }
@@ -54,10 +52,18 @@ export default function PhotosPage() {
         }
 
         fetchUserData();
-    }, [accessToken, logout]);
+    }, [isAuthenticated, accessToken, router, logout]);
 
     if (!isAuthenticated) {
         return null;
+    }
+
+    if (loading) {
+        return <div>Загрузка...</div>;
+    }
+
+    if (error) {
+        return <div>Ошибка: {error}</div>;
     }
 
     return (
@@ -105,9 +111,7 @@ export default function PhotosPage() {
                     boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
                     padding: '1.5rem'
                 }}>
-                    {loading ? (
-                        <p style={{ color: '#4b5563' }}>Загрузка данных пользователя...</p>
-                    ) : userData ? (
+                    {userData ? (
                         <div>
                             <p style={{ 
                                 color: '#4b5563',
