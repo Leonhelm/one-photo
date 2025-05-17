@@ -1,6 +1,7 @@
 import { Inter } from 'next/font/google';
 import { AuthProvider } from '@/providers/AuthProvider';
 import type { Metadata } from 'next';
+import ThemeRegistry from '@/providers/ThemeRegistry';
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'] });
 
@@ -17,9 +18,11 @@ export default function RootLayout({
   return (
     <html lang="ru">
       <body className={inter.className}>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <ThemeRegistry>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </ThemeRegistry>
       </body>
     </html>
   );

@@ -3,6 +3,16 @@
 import { useAuth } from '@/providers/AuthProvider';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import {
+    Box,
+    Button,
+    Container,
+    Paper,
+    Typography,
+    CircularProgress,
+    Alert,
+} from '@mui/material';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 interface UserData {
     displayName: string;
@@ -59,80 +69,67 @@ export default function PhotosPage() {
     }
 
     if (loading) {
-        return <div>Загрузка...</div>;
+        return (
+            <Box
+                sx={{
+                    minHeight: '100vh',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                }}
+            >
+                <CircularProgress />
+            </Box>
+        );
     }
 
     if (error) {
-        return <div>Ошибка: {error}</div>;
+        return (
+            <Container maxWidth="md" sx={{ mt: 4 }}>
+                <Alert severity="error" sx={{ mb: 2 }}>
+                    {error}
+                </Alert>
+                <Button
+                    variant="contained"
+                    onClick={() => window.location.reload()}
+                >
+                    Попробовать снова
+                </Button>
+            </Container>
+        );
     }
 
     return (
-        <div style={{ 
-            minHeight: '100vh',
-            backgroundColor: '#f9fafb',
-            padding: '2rem'
-        }}>
-            <div style={{ 
-                maxWidth: '1200px',
-                margin: '0 auto'
-            }}>
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '2rem'
-                }}>
-                    <h1 style={{ 
-                        fontSize: '1.875rem',
-                        fontWeight: 'bold',
-                        color: '#111827',
-                        margin: 0
-                    }}>
-                        Ваши последние фотографии
-                    </h1>
-                    <button
-                        onClick={logout}
-                        style={{
-                            padding: '0.5rem 1rem',
-                            backgroundColor: '#ef4444',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '0.375rem',
-                            cursor: 'pointer',
-                            fontSize: '0.875rem'
-                        }}
-                    >
-                        Выйти
-                    </button>
-                </div>
-                <div style={{ 
-                    backgroundColor: 'white',
-                    borderRadius: '0.5rem',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                    padding: '1.5rem'
-                }}>
-                    {userData ? (
-                        <div>
-                            <p style={{ 
-                                color: '#4b5563',
-                                marginBottom: '1rem'
-                            }}>
-                                Добро пожаловать, <strong>{userData.displayName}</strong>!
-                            </p>
-                            <p style={{ 
-                                color: '#6b7280',
-                                fontSize: '0.875rem'
-                            }}>
-                                {userData.userPrincipalName}
-                            </p>
-                        </div>
-                    ) : (
-                        <p style={{ color: '#4b5563' }}>
-                            Не удалось загрузить данные пользователя
-                        </p>
-                    )}
-                </div>
-            </div>
-        </div>
+        <Container maxWidth="lg" sx={{ py: 4 }}>
+            <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="h4" component="h1">
+                    Ваши последние фотографии
+                </Typography>
+                <Button
+                    variant="outlined"
+                    color="error"
+                    startIcon={<LogoutIcon />}
+                    onClick={logout}
+                >
+                    Выйти
+                </Button>
+            </Box>
+            <Paper sx={{ p: 3 }}>
+                {userData ? (
+                    <Box>
+                        <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+                            Добро пожаловать, <strong>{userData.displayName}</strong>!
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            {userData.userPrincipalName}
+                        </Typography>
+                    </Box>
+                ) : (
+                    <Typography color="text.secondary">
+                        Не удалось загрузить данные пользователя
+                    </Typography>
+                )}
+            </Paper>
+        </Container>
     );
 } 
