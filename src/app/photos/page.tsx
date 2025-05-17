@@ -2,17 +2,59 @@
 
 import { useAuth } from '@/providers/AuthProvider';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+
+interface UserData {
+    displayName: string;
+    userPrincipalName: string;
+}
 
 export default function PhotosPage() {
-    const { isAuthenticated, accessToken } = useAuth();
+    const { isAuthenticated, accessToken, logout } = useAuth();
     const router = useRouter();
+    const [userData, setUserData] = useState<UserData | null>(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (!isAuthenticated) {
             router.push('/login');
         }
     }, [isAuthenticated, router]);
+
+    useEffect(() => {
+        async function fetchUserData() {
+            if (!accessToken) return;
+
+            try {
+                const response = await fetch('/api/user', {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        // Если токен истек или недействителен
+                        logout();
+                        return;
+                    }
+                    throw new Error('Ошибка при получении данных пользователя');
+                }
+
+                const data = await response.json();
+                setUserData(data);
+            } catch (error) {
+                console.error('Ошибка:', error);
+                if (error instanceof Error && error.message.includes('401')) {
+                    logout();
+                }
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchUserData();
+    }, [accessToken, logout]);
 
     if (!isAuthenticated) {
         return null;
@@ -28,34 +70,63 @@ export default function PhotosPage() {
                 maxWidth: '1200px',
                 margin: '0 auto'
             }}>
-                <h1 style={{ 
-                    fontSize: '1.875rem',
-                    fontWeight: 'bold',
-                    color: '#111827',
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
                     marginBottom: '2rem'
                 }}>
-                    Ваши последние фотографии
-                </h1>
+                    <h1 style={{ 
+                        fontSize: '1.875rem',
+                        fontWeight: 'bold',
+                        color: '#111827',
+                        margin: 0
+                    }}>
+                        Ваши последние фотографии
+                    </h1>
+                    <button
+                        onClick={logout}
+                        style={{
+                            padding: '0.5rem 1rem',
+                            backgroundColor: '#ef4444',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '0.375rem',
+                            cursor: 'pointer',
+                            fontSize: '0.875rem'
+                        }}
+                    >
+                        Выйти
+                    </button>
+                </div>
                 <div style={{ 
                     backgroundColor: 'white',
                     borderRadius: '0.5rem',
                     boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
                     padding: '1.5rem'
                 }}>
-                    <p style={{ 
-                        color: '#4b5563'
-                    }}>
-                        Токен получен успешно! Здесь будет отображение фотографий.
-                    </p>
-                    <pre style={{ 
-                        marginTop: '1rem',
-                        padding: '1rem',
-                        backgroundColor: '#f3f4f6',
-                        borderRadius: '0.25rem',
-                        overflowX: 'auto'
-                    }}>
-                        {accessToken ? `Токен: ${accessToken.substring(0, 20)}...` : 'Токен отсутствует'}
-                    </pre>
+                    {loading ? (
+                        <p style={{ color: '#4b5563' }}>Загрузка данных пользователя...</p>
+                    ) : userData ? (
+                        <div>
+                            <p style={{ 
+                                color: '#4b5563',
+                                marginBottom: '1rem'
+                            }}>
+                                Добро пожаловать, <strong>{userData.displayName}</strong>!
+                            </p>
+                            <p style={{ 
+                                color: '#6b7280',
+                                fontSize: '0.875rem'
+                            }}>
+                                {userData.userPrincipalName}
+                            </p>
+                        </div>
+                    ) : (
+                        <p style={{ color: '#4b5563' }}>
+                            Не удалось загрузить данные пользователя
+                        </p>
+                    )}
                 </div>
             </div>
         </div>

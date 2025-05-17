@@ -18,6 +18,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
+    // Очистка токена при закрытии вкладки
+    useEffect(() => {
+        const handleBeforeUnload = () => {
+            setAccessToken(null);
+            setIsAuthenticated(false);
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+            // Очищаем токен при размонтировании компонента
+            setAccessToken(null);
+            setIsAuthenticated(false);
+        };
+    }, []);
+
     useEffect(() => {
         // Проверяем наличие токена в URL после callback
         const token = searchParams.get('token');
@@ -57,6 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const logout = () => {
         setIsAuthenticated(false);
         setAccessToken(null);
+        router.push('/login');
     };
 
     return (
