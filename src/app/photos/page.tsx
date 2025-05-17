@@ -15,7 +15,6 @@ import {
     ImageListItem,
     ImageListItemBar,
     TextField,
-    Grid,
 } from '@mui/material';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -33,7 +32,7 @@ interface Photo {
     id: string;
     name: string;
     webUrl: string;
-    thumbnailUrl: string;
+    thumbnailUrl: string | null;
     lastModifiedDateTime: string;
 }
 
@@ -60,8 +59,15 @@ export default function PhotosPage() {
             return;
         }
 
+        let isMounted = true;
+
         async function fetchData() {
+            if (!isMounted) return;
+            
             try {
+                setLoading(true);
+                setError(null);
+
                 // Загрузка данных пользователя
                 const userResponse = await fetch('/api/user', {
                     headers: {
@@ -78,39 +84,53 @@ export default function PhotosPage() {
                 }
 
                 const userData = await userResponse.json();
-                setUserData(userData);
-
-                // Загрузка фотографий
-                const photosResponse = await fetch('/api/photos', {
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`
-                    }
-                });
-
-                if (!photosResponse.ok) {
-                    if (photosResponse.status === 401) {
-                        logout();
-                        return;
-                    }
-                    throw new Error('Ошибка при загрузке фотографий');
+                if (isMounted) {
+                    setUserData(userData);
                 }
 
-                const photosData = await photosResponse.json();
-                console.log('Полученные фотографии:', photosData);
-                setPhotos(photosData);
+                // Загрузка фотографий только если нет данных
+                if (photos.length === 0) {
+                    const photosResponse = await fetch('/api/photos', {
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`
+                        }
+                    });
+
+                    if (!photosResponse.ok) {
+                        if (photosResponse.status === 401) {
+                            logout();
+                            return;
+                        }
+                        throw new Error('Ошибка при загрузке фотографий');
+                    }
+
+                    const photosData = await photosResponse.json();
+                    if (isMounted) {
+                        console.log('Полученные фотографии:', photosData);
+                        setPhotos(photosData);
+                    }
+                }
             } catch (error) {
                 console.error('Ошибка:', error);
-                setError(error instanceof Error ? error.message : 'Произошла ошибка');
-                if (error instanceof Error && error.message.includes('401')) {
-                    logout();
+                if (isMounted) {
+                    setError(error instanceof Error ? error.message : 'Произошла ошибка');
+                    if (error instanceof Error && error.message.includes('401')) {
+                        logout();
+                    }
                 }
             } finally {
-                setLoading(false);
+                if (isMounted) {
+                    setLoading(false);
+                }
             }
         }
 
         fetchData();
-    }, [isAuthenticated, accessToken, router, logout]);
+
+        return () => {
+            isMounted = false;
+        };
+    }, [isAuthenticated, accessToken, router, logout, photos.length]);
 
     const handleFilterChange = (field: keyof FilterState, value: any) => {
         setFilters(prev => ({
@@ -220,8 +240,8 @@ export default function PhotosPage() {
                 <Typography variant="h6" sx={{ mb: 2 }}>
                     Фильтры
                 </Typography>
-                <Grid container spacing={2} alignItems="center">
-                    <Grid item xs={12} md={4} component="div">
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                    <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 33.33%' } }}>
                         <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ru}>
                             <DatePicker
                                 label="Дата"
@@ -235,8 +255,8 @@ export default function PhotosPage() {
                                 }}
                             />
                         </LocalizationProvider>
-                    </Grid>
-                    <Grid item xs={12} md={6} component="div">
+                    </Box>
+                    <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 50%' } }}>
                         <TextField
                             fullWidth
                             label="Путь к директории"
@@ -244,18 +264,17 @@ export default function PhotosPage() {
                             onChange={(e) => handleFilterChange('directoryPath', e.target.value)}
                             variant="outlined"
                         />
-                    </Grid>
-                    <Grid item xs={12} md={2} component="div">
+                    </Box>
+                    <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 16.66%' } }}>
                         <Button
                             fullWidth
                             variant="contained"
                             onClick={handleFilterSubmit}
-                            disabled={loading}
                         >
                             Применить
                         </Button>
-                    </Grid>
-                </Grid>
+                    </Box>
+                </Box>
             </Paper>
 
             <Box sx={{ mt: 4 }}>
@@ -266,36 +285,18 @@ export default function PhotosPage() {
                         </Typography>
                     </Paper>
                 ) : (
-                    <ImageList
-                        sx={{ width: '100%', height: 'auto' }}
-                        cols={3}
-                        rowHeight={300}
-                        gap={16}
-                    >
+                    <ImageList sx={{ width: '100%', height: 'auto' }} cols={3} gap={8}>
                         {photos.map((photo) => (
                             <ImageListItem key={photo.id}>
                                 <img
-                                    src={photo.thumbnailUrl}
+                                    src={photo.thumbnailUrl || photo.webUrl}
                                     alt={photo.name}
                                     loading="lazy"
-                                    style={{
-                                        width: '100%',
-                                        height: '100%',
-                                        objectFit: 'cover',
-                                        borderRadius: '8px',
-                                    }}
-                                    onError={(e) => {
-                                        console.error('Ошибка загрузки изображения:', photo.name);
-                                        e.currentTarget.src = '/placeholder-image.png';
-                                    }}
+                                    style={{ objectFit: 'cover', height: '200px' }}
                                 />
                                 <ImageListItemBar
                                     title={photo.name}
                                     subtitle={new Date(photo.lastModifiedDateTime).toLocaleDateString('ru-RU')}
-                                    sx={{
-                                        borderBottomLeftRadius: '8px',
-                                        borderBottomRightRadius: '8px',
-                                    }}
                                 />
                             </ImageListItem>
                         ))}

@@ -10,45 +10,56 @@ interface FilterParams {
 async function getPhotosFromFolder(client: Client, folderId: string, filterDate?: Date): Promise<any[]> {
     console.log('Получаем содержимое папки:', folderId);
     
-    const response = await client
-        .api(`/me/drive/items/${folderId}/children`)
-        .select('id,name,file,webUrl,lastModifiedDateTime,folder')
-        .get();
+    try {
+        const response = await client
+            .api(`/me/drive/items/${folderId}/children`)
+            .select('id,name,file,webUrl,lastModifiedDateTime,folder,thumbnails')
+            .expand('thumbnails')
+            .get();
 
-    if (!response || !response.value) {
-        console.error('Неожиданный формат ответа от Graph API:', response);
-        return [];
-    }
+        if (!response || !response.value) {
+            console.error('Неожиданный формат ответа от Graph API:', response);
+            return [];
+        }
 
-    const photos: any[] = [];
-    const folders: any[] = [];
+        const photos: any[] = [];
+        const folders: any[] = [];
 
-    // Разделяем файлы и папки
-    for (const item of response.value) {
-        if (item.folder) {
-            folders.push(item);
-        } else if (item.file) {
-            // Если указана дата, фильтруем по ней
-            if (filterDate) {
-                const itemDate = new Date(item.lastModifiedDateTime);
-                if (itemDate.getDate() === filterDate.getDate() && 
-                    itemDate.getMonth() === filterDate.getMonth()) {
+        // Разделяем файлы и папки
+        for (const item of response.value) {
+            if (item.folder) {
+                folders.push(item);
+            } else if (item.file) {
+                // Если указана дата, фильтруем по ней
+                if (filterDate) {
+                    const itemDate = new Date(item.lastModifiedDateTime);
+                    if (itemDate.getDate() === filterDate.getDate() && 
+                        itemDate.getMonth() === filterDate.getMonth()) {
+                        photos.push(item);
+                    }
+                } else {
                     photos.push(item);
                 }
-            } else {
-                photos.push(item);
             }
         }
-    }
 
-    // Рекурсивно обходим подпапки
-    for (const folder of folders) {
-        console.log('Обходим подпапку:', folder.name);
-        const subPhotos = await getPhotosFromFolder(client, folder.id, filterDate);
-        photos.push(...subPhotos);
-    }
+        // Рекурсивно обходим подпапки
+        for (const folder of folders) {
+            console.log('Обходим подпапку:', folder.name);
+            try {
+                const subPhotos = await getPhotosFromFolder(client, folder.id, filterDate);
+                photos.push(...subPhotos);
+            } catch (error) {
+                console.error(`Ошибка при обходе подпапки ${folder.name}:`, error);
+                // Продолжаем работу с другими папками
+            }
+        }
 
-    return photos;
+        return photos;
+    } catch (error) {
+        console.error('Ошибка при получении содержимого папки:', error);
+        throw error;
+    }
 }
 
 export async function GET(request: NextRequest) {
@@ -112,7 +123,8 @@ export async function GET(request: NextRequest) {
                 id: item.id,
                 name: item.name,
                 webUrl: item.webUrl,
-                lastModifiedDateTime: item.lastModifiedDateTime
+                lastModifiedDateTime: item.lastModifiedDateTime,
+                thumbnailUrl: item.thumbnails?.[0]?.small?.url || null
             }))
             .sort((a: any, b: any) => 
                 new Date(b.lastModifiedDateTime).getTime() - new Date(a.lastModifiedDateTime).getTime()
@@ -179,7 +191,8 @@ export async function POST(request: NextRequest) {
                 id: item.id,
                 name: item.name,
                 webUrl: item.webUrl,
-                lastModifiedDateTime: item.lastModifiedDateTime
+                lastModifiedDateTime: item.lastModifiedDateTime,
+                thumbnailUrl: item.thumbnails?.[0]?.small?.url || null
             }))
             .sort((a: any, b: any) => 
                 new Date(b.lastModifiedDateTime).getTime() - new Date(a.lastModifiedDateTime).getTime()

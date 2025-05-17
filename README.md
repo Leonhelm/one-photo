@@ -51,7 +51,7 @@
 - `REDIRECT_URI`: URL для перенаправления после авторизации (например, "http://localhost:3000/api/auth/callback", указано в entra.microsoft.com)
 
 ### Настройки приложения
-- `ONEDRIVE_PHOTOS_DIR`: путь к директории с фотографиями в OneDrive (например, "/Photos/2024")
+- `NEXT_PUBLIC_ONEDRIVE_PHOTOS_DIR`: путь к директории с фотографиями в OneDrive (например, "/Photos/2024")
 
 ## План разработки
 
