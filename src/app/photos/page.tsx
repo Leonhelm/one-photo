@@ -19,10 +19,19 @@ interface UserData {
     userPrincipalName: string;
 }
 
+interface Photo {
+    id: string;
+    name: string;
+    webUrl: string;
+    thumbnailUrl: string;
+    lastModifiedDateTime: string;
+}
+
 export default function PhotosPage() {
     const { isAuthenticated, accessToken, logout } = useAuth();
     const router = useRouter();
     const [userData, setUserData] = useState<UserData | null>(null);
+    const [photos, setPhotos] = useState<Photo[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -32,24 +41,43 @@ export default function PhotosPage() {
             return;
         }
 
-        async function fetchUserData() {
+        async function fetchData() {
             try {
-                const response = await fetch('/api/user', {
+                // Загрузка данных пользователя
+                const userResponse = await fetch('/api/user', {
                     headers: {
                         'Authorization': `Bearer ${accessToken}`
                     }
                 });
 
-                if (!response.ok) {
-                    if (response.status === 401) {
+                if (!userResponse.ok) {
+                    if (userResponse.status === 401) {
                         logout();
                         return;
                     }
                     throw new Error('Ошибка при получении данных пользователя');
                 }
 
-                const data = await response.json();
-                setUserData(data);
+                const userData = await userResponse.json();
+                setUserData(userData);
+
+                // Загрузка фотографий
+                const photosResponse = await fetch('/api/photos', {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+
+                if (!photosResponse.ok) {
+                    if (photosResponse.status === 401) {
+                        logout();
+                        return;
+                    }
+                    throw new Error('Ошибка при загрузке фотографий');
+                }
+
+                const photosData = await photosResponse.json();
+                setPhotos(photosData);
             } catch (error) {
                 console.error('Ошибка:', error);
                 setError(error instanceof Error ? error.message : 'Произошла ошибка');
@@ -61,7 +89,7 @@ export default function PhotosPage() {
             }
         }
 
-        fetchUserData();
+        fetchData();
     }, [isAuthenticated, accessToken, router, logout]);
 
     if (!isAuthenticated) {
